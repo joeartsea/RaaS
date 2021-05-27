@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { EventRecord } from '@polkadot/types/interfaces';
+import type { Vec } from '@polkadot/types';
 
 import useSubstrateApi from './Api';
 
@@ -26,7 +27,7 @@ export default function Events() {
       api &&
       api.query &&
       api.query.system &&
-      api.query.system.events((events: EventRecord[]) => {
+      api.query.system.events((events: Vec<EventRecord>) => {
         events.forEach((record: EventRecord) => {
           const { event, phase } = record;
 
