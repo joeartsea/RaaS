@@ -1,14 +1,15 @@
-import React, { useState, useEffect, SyntheticEvent, useMemo } from 'react';
+import React, { useState, useEffect, SyntheticEvent, useMemo, useCallback } from 'react';
 import keyring from '@polkadot/ui-keyring';
 import { u8aToString } from '@polkadot/util';
 import { AnyJson } from '@polkadot/types/types';
 import { Abi } from '@polkadot/api-contract';
+import { useDropzone, FileRejection } from 'react-dropzone';
 
 import config from './config';
 import useSubstrateApi from './Api';
 import getContractPromise from './getContractPromise';
 
-import { Button, ButtonGroup, ButtonOr, Form, Grid, Input, InputOnChangeData } from 'semantic-ui-react';
+import { Button, ButtonGroup, ButtonOr, Form, Grid, Icon, Input, InputOnChangeData, Segment } from 'semantic-ui-react';
 
 interface FileState {
   data: Uint8Array,
@@ -40,25 +41,6 @@ export default function Contract() {
   });
   const { address, name } = formState;
   const [status, setStatus] = useState<string>('');
-
-  const handleFileChosen = (file: File) => {
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = ({ target }: ProgressEvent<FileReader>) => {
-      if (target && target.result) {
-        const data = new Uint8Array(target.result as ArrayBuffer);
-        const fileState = {
-          data: data,
-          name: file.name,
-          size: data.length
-        };
-        setAbiFile(fileState);
-      }
-    };
-
-    reader.readAsArrayBuffer(file);
-  };
 
   useEffect(() => {
 
@@ -116,6 +98,46 @@ export default function Contract() {
     setStatus('remove contract to keyring completed.');
   };
 
+  const onDrop = useCallback((files: File[]) => {
+    files.forEach((file: File) => {
+      const reader = new FileReader();
+
+      reader.onload = ({ target }: ProgressEvent<FileReader>) => {
+        if (target && target.result) {
+          const data = new Uint8Array(target.result as ArrayBuffer);
+          const fileState = {
+            data: data,
+            name: file.name,
+            size: data.length
+          };
+          setAbiFile(fileState);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+
+    setStatus('');
+  }, []);
+
+  const onDropRejected = useCallback((files: FileRejection[]) => {
+    files.forEach(({ file, errors }) => {
+      errors.forEach((e) => {
+        const msg = `${e.code}: ${e.message} (${file.name})`;
+        setStatus(msg);
+      });
+    });
+  }, []);
+
+  const { getRootProps, getInputProps, open } = useDropzone({
+    accept: '.json',
+    noClick: true,
+    noKeyboard: true,
+    maxFiles: 1,
+    onDrop,
+    onDropRejected
+  });
+
   return (
     <>
     <Grid.Column>
@@ -143,15 +165,25 @@ export default function Contract() {
       </Form.Field>
       {!contract ?
       <Form.Field>
-        <Input
-          type='file'
-          id='json-file'
-          label='Metadata File'
-          accept='.json'
-          onChange={e => e.target.files && handleFileChosen(e.target.files[0])}
-        />
+        <Segment
+          secondary
+          padded='very'
+          textAlign='center'
+        >
+        <div {...getRootProps()}>
+          <input {...getInputProps()} />
+          <p>drag & drop to upload metadata file.</p>
+          <button type='button' onClick={open} >Open File Dialog</button>
+          {abiFile.size>0 ?
+            <p style={{ marginTop: '0.5em', fontSize: '1.2em', color: '#000'}}>
+              <Icon name='file outline' />uploaded file: {abiFile.name}
+            </p>
+          : null}
+        </div>
+        </Segment>
       </Form.Field>
       : null}
+      <div style={{ overflowWrap: 'break-word' }}>{status}</div>
       <Form.Field style={{ textAlign: 'right' }}>
         <ButtonGroup>
           <Button
@@ -169,7 +201,6 @@ export default function Contract() {
           >Forget</Button>
         </ButtonGroup>
       </Form.Field>
-      <div style={{ overflowWrap: 'break-word' }}>{status}</div>
     </Form>
     </Grid.Column>
     </>

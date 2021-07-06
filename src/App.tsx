@@ -1,18 +1,10 @@
 import React from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
 
 import config from './config';
 import useSubstrateApi, { ApiContextProvider } from './Api';
 import ContractCaller from './ContractCaller';
-import Issuance from './Issuance';
-import Authority from './Authority';
-import OwnerPoint from './OwnerPoint';
-import GivePoints from './GivePoints';
-import StorePoints from './StorePoints';
-import StoreUserPoints from './StoreUserPoints';
-import SpendPoints from './SpendPoints';
-import UserPoints from './UserPoints';
-import Events from './Events';
-import Contract from './Contract';
+import SideMenu from './SideMenu';
 
 import { Container, Dimmer, Grid, Loader, Message } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
@@ -67,24 +59,7 @@ const Main = () => {
         </Grid.Row>
         : null}
         <Grid.Row>
-          <Issuance />
-          <Authority />
-        </Grid.Row>
-        <Grid.Row>
-          <GivePoints />
-          <SpendPoints />
-        </Grid.Row>
-        <Grid.Row>
-          <OwnerPoint />
-          <StorePoints />
-          <StoreUserPoints />
-          <UserPoints />
-        </Grid.Row>
-        <Grid.Row>
-          <Events />
-        </Grid.Row>
-        <Grid.Row>
-          <Contract />
+          <SideMenu />
         </Grid.Row>
       </Grid>
     </Container>
@@ -94,7 +69,9 @@ const Main = () => {
 const App = () => {
   return (
     <ApiContextProvider>
-      <Main />
+      <Router>
+        <Main />
+      </Router>
     </ApiContextProvider>
   );
 };
